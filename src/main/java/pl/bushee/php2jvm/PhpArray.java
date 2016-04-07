@@ -5,10 +5,14 @@ import java.util.Map;
 
 public class PhpArray<T> extends LinkedHashMap<String, T> {
 
-    int currentIndex = 0;
+    private int currentIndex = 0;
 
     public PhpArray() {
         super();
+    }
+
+    public PhpArray(PhpArray<T> array) {
+        super(array);
     }
 
     public void append(T t) {
@@ -47,8 +51,17 @@ public class PhpArray<T> extends LinkedHashMap<String, T> {
     }
 
     @Override
-    public void putAll(Map<? extends String, ? extends T> m) {
-        //  TODO
-        throw new UnsupportedOperationException();
+    public void putAll(Map<? extends String, ? extends T> map) {
+        map.forEach((key,  value) -> {
+            if (!containsKey(key)) {
+                put(key, value);
+            }
+        });
+    }
+
+    static <T> PhpArray<T> union(PhpArray<T> array1, PhpArray<T> array2) {
+        PhpArray<T> union = new PhpArray<T>(array1);
+        union.putAll(array2);
+        return union;
     }
 }
