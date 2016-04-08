@@ -36,4 +36,52 @@ class NumbersSpec extends Specification {
         expect:
         !Numbers.isNumeric(new Object())
     }
+
+    def "isNaN() should return true for any NaN value"() {
+        expect:
+        Numbers.isNaN(nan)
+
+        where:
+        nan << [Float.NaN, Double.NaN]
+    }
+
+    def "isNaN() should return false for any proper numeric value"() {
+        expect:
+        !Numbers.isNaN(notNan)
+
+        where:
+        notNan << [1, Float.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY]
+    }
+
+    def "isInfinite() should return true for any infinite numeric value"() {
+        expect:
+        Numbers.isInfinite(infinite)
+
+        where:
+        infinite << [Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY]
+    }
+
+    def "isInfinite() should return false for any finite numeric value or any non-numeric value"() {
+        expect:
+        !Numbers.isInfinite(notInfinite)
+
+        where:
+        notInfinite << [1, 12.5, '40', Float.NaN, Double.NaN, 'surely not finite']
+    }
+
+    def "isFinite() should return true for any finite numeric value"() {
+        expect:
+        Numbers.isFinite(finite)
+
+        where:
+        finite << [1, 12.5, '40', '1.5e13']
+    }
+
+    def "isFinite() should return false for any infinite numeric value or any non-numeric value"() {
+        expect:
+        !Numbers.isFinite(notFinite)
+
+        where:
+        notFinite << [Float.NaN, Double.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY]
+    }
 }
