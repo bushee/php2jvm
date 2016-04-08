@@ -52,11 +52,42 @@ public class PhpArray<T> extends LinkedHashMap<String, T> {
 
     @Override
     public void putAll(Map<? extends String, ? extends T> map) {
-        map.forEach((key,  value) -> {
+        map.forEach((key, value) -> {
             if (!containsKey(key)) {
                 put(key, value);
             }
         });
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof PhpArray) {
+            return equals((PhpArray) o);
+        }
+        return super.equals(o);
+    }
+
+    public boolean equals(PhpArray array) {
+        if (identicalTo(array)) {
+            return true;
+        }
+        if (!keySet().equals(array.keySet())) {
+            return false;
+        }
+        for (String key : keySet()) {
+            if (!TypeJuggler.compare(get(key), array.get(key)).isEqual()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean identicalTo(PhpArray array) {
+        if (this == array) {
+            return true;
+        }
+        // TODO
+        return false;
     }
 
     static <T> PhpArray<T> union(PhpArray<T> array1, PhpArray<T> array2) {

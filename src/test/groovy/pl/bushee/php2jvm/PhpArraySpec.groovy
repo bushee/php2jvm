@@ -274,4 +274,28 @@ class PhpArraySpec extends Specification {
         c.get(2) == 2
         c.get('2') == 2
     }
+
+    def '$a = array(1); $b = array(1); $a == $b && $b == $a'() {
+        when:
+        def a = new PhpArray()
+        a.append(1)
+        def b = new PhpArray()
+        b.append(1)
+
+        then:
+        a.equals(b)
+        b.equals(a)
+    }
+
+    def '$a = array(1); $b = array(1); $a !== $b && $b !== $a'() {
+        when:
+        def a = new PhpArray()
+        a.append(1)
+        def b = new PhpArray()
+        b.append(1)
+
+        then:
+        !a.identicalTo(b)
+        !b.identicalTo(a)
+    }
 }
