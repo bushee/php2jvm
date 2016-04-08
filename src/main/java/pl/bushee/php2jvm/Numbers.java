@@ -1,5 +1,7 @@
 package pl.bushee.php2jvm;
 
+import pl.bushee.php2jvm.function.PhpFunction;
+
 import java.util.regex.Pattern;
 
 @PhpInternal

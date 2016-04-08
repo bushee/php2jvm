@@ -1,5 +1,8 @@
 package pl.bushee.php2jvm;
 
+import pl.bushee.php2jvm.function.PhpFunction;
+
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -35,35 +38,32 @@ public class Globals extends Context {
     }
 
     private void registerFunction(Object functionHolder, Method method, PhpFunction functionMetadata) {
-        FunctionDefinition alreadyRegisteredFunction = functions.get(functionMetadata.value());
-        if (alreadyRegisteredFunction != null) {
-            if (!tryToOverrideFunction(alreadyRegisteredFunction, functionHolder, method, functionMetadata)) {
-                throw new FatalError("Cannot redeclare " + functionMetadata.value() + "()");
-            }
+        if (functions.containsKey(functionMetadata.value())) {
+            throw new FatalError("Cannot redeclare " + functionMetadata.value() + "()");
         }
 
-        functions.put(functionMetadata.value(), createFunctionDefinition(functionHolder, method, functionMetadata));
+        functions.put(functionMetadata.value(), createFunctionDefinition(functionHolder, method));
     }
 
-    private boolean tryToOverrideFunction(FunctionDefinition alreadyRegisteredFunction, Object functionHolder, Method method, PhpFunction functionMetadata) {
-        if (alreadyRegisteredFunction instanceof OverloadedFunctionDefinition && functionMetadata.overloaded()) {
-            OverloadedFunctionDefinition overloadedFunctionDefinition = (OverloadedFunctionDefinition) alreadyRegisteredFunction;
-            return overloadedFunctionDefinition.addOverride(functionHolder, method);
-        }
-        return false;
-    }
-
-    private FunctionDefinition createFunctionDefinition(Object functionHolder, Method method, PhpFunction functionMetadata) {
+    private FunctionDefinition createFunctionDefinition(Object functionHolder, Method method) {
         FunctionDefinition.FunctionType functionType = isInternalFunctionHolder(functionHolder) ? INTERNAL : USER;
-        if (functionMetadata.overloaded()) {
-            return new OverloadedFunctionDefinition(functionHolder, method, functionType);
-        } else {
-            return new SingleSignatureFunctionDefinition(functionHolder, method, functionType);
-        }
+        return new FunctionDefinition(functionHolder, method, functionType);
     }
 
     private boolean isInternalFunctionHolder(Object functionHolder) {
         return functionHolder.getClass().isAnnotationPresent(PhpInternal.class);
+    }
+
+    public Object callFunction(String functionName, Object... arguments) throws InvocationTargetException {
+        FunctionDefinition function = functions.get(functionName);
+        if (function == null) {
+            throw new FatalError("Call to undefined function " + functionName + "()");
+        }
+        try {
+            return function.call(arguments);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PhpFunction("get_defined_functions")
