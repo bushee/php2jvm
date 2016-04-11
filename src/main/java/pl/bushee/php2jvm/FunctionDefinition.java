@@ -11,42 +11,33 @@ import pl.bushee.php2jvm.function.OptionalStringArgument;
 import pl.bushee.php2jvm.function.OptionalStringArrayArgument;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-class FunctionDefinition {
+abstract class FunctionDefinition {
+    protected final Method method;
+    protected final String name;
 
-    private final Object functionHolder;
-    private final Method method;
-    private final FunctionType type;
-
-    FunctionDefinition(Object functionHolder, Method method, FunctionType type) {
-        this.functionHolder = functionHolder;
+    FunctionDefinition(Method method, String name) {
         this.method = method;
-        this.type = type;
+        this.name = name;
     }
 
-    FunctionType getType() {
-        return type;
+    public String getName() {
+        return name;
     }
 
-    Object call(Object... arguments) throws InvocationTargetException, IllegalAccessException {
-        // TODO arguments conversion
-        Object[] args = new Object[method.getParameterCount()];
-        for (int i = 0; i < args.length; ++i) {
-            if (i < arguments.length) {
-                args[i] = arguments[i];
-            } else {
-                args[i] = getDefaultValueForArgument(i);
-            }
-        }
-        return method.invoke(functionHolder, args);
+    public boolean isInternal() {
+        return method.getDeclaringClass().isAnnotationPresent(PhpInternal.class);
     }
+
+    public FunctionType getType() {
+        return isInternal() ? FunctionType.INTERNAL : FunctionType.USER;
+    }
+
+    public abstract Object call(Object... arguments) throws IllegalAccessException;
 
     private Object getDefaultValueForArgument(int argumentNum) {
-        Annotation[] annotations = method.getParameterAnnotations()[argumentNum];
-        for (int i = 0; i < annotations.length; ++i) {
-            Annotation annotation = annotations[i];
+        for (Annotation annotation : method.getParameterAnnotations()[argumentNum]) {
             if (annotation instanceof OptionalBooleanArgument) {
                 return ((OptionalBooleanArgument) annotation).value();
             }
@@ -78,7 +69,20 @@ class FunctionDefinition {
         return null;
     }
 
-    enum FunctionType {
+    protected Object[] prepareArguments(Object[] arguments) {
+        // TODO arguments conversion
+        Object[] args = new Object[method.getParameterCount()];
+        for (int i = 0; i < args.length; ++i) {
+            if (i < arguments.length) {
+                args[i] = arguments[i];
+            } else {
+                args[i] = getDefaultValueForArgument(i);
+            }
+        }
+        return args;
+    }
+
+    public enum FunctionType {
         INTERNAL, USER;
     }
 }
