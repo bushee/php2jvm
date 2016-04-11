@@ -40,7 +40,6 @@ public class Globals extends Context {
         }
     }
 
-    // TODO specific UT for this method
     public void registerFunctions(Object functionHolderObject) {
         for (Method method : functionHolderObject.getClass().getDeclaredMethods()) {
             if (Modifier.isStatic(method.getModifiers())) {

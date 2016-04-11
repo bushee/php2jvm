@@ -37,6 +37,7 @@ abstract class FunctionDefinition {
     public abstract Object call(Object... arguments) throws IllegalAccessException;
 
     private Object getDefaultValueForArgument(int argumentNum) {
+        // TODO optimize, eg. create list of defaults once per function
         for (Annotation annotation : method.getParameterAnnotations()[argumentNum]) {
             if (annotation instanceof OptionalBooleanArgument) {
                 return ((OptionalBooleanArgument) annotation).value();

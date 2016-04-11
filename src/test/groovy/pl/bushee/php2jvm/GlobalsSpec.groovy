@@ -51,6 +51,17 @@ class GlobalsSpec extends Specification {
         definedFunctions['user'].containsValue('some_function2')
     }
 
+    def "registering static method as a function should work properly"() {
+        given:
+        def globals = new Globals()
+
+        when:
+        globals.registerFunctions(StaticFunctionHolder)
+
+        then:
+        globals.definedFunctions['user'].containsValue('some_static_function')
+    }
+
     @Unroll
     def "trying to overwrite #original function with #conflicting function should raise an error"() {
         given:
@@ -136,25 +147,41 @@ class GlobalsSpec extends Specification {
         functionHolder.receivedC == 'c'
     }
 
-    def "calling function with missing parameters should result in using default values for them"() {
+    @Unroll
+    def "calling function with missing parameters should result in using default values for them (passing #argsCount out of 9 arguments)"() {
         given:
         def globals = new Globals()
         def functionHolder = new DefaultValuesFunctionHolder()
         globals.registerFunctions(functionHolder)
 
         when:
-        globals.callFunction('default_values_function')
+        globals.callFunction('default_values_function', arguments.toArray())
 
         then:
-        functionHolder.receivedA == null
-        functionHolder.receivedB == true
-        functionHolder.receivedC == 3
-        functionHolder.receivedD == 1.2f
-        functionHolder.receivedE == 'abc'
-        functionHolder.receivedF == [true, false]
-        functionHolder.receivedG == [1, 2, 3]
-        functionHolder.receivedH == [2.2f, 3.3f]
-        functionHolder.receivedI == ['a', 'b']
+        functionHolder.receivedA == expectedA
+        functionHolder.receivedB == expectedB
+        functionHolder.receivedC == expectedC
+        functionHolder.receivedD == expectedD
+        functionHolder.receivedE == expectedE
+        functionHolder.receivedF == expectedF
+        functionHolder.receivedG == expectedG
+        functionHolder.receivedH == expectedH
+        functionHolder.receivedI == expectedI
+
+        where:
+        arguments                                     | expectedA | expectedB | expectedC | expectedD | expectedE | expectedF     | expectedG | expectedH    | expectedI
+        []                                            | null      | true      | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a']                                         | 'a'       | true      | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b']                                    | 'a'       | 'b'       | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c']                               | 'a'       | 'b'       | 'c'       | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c', 'd']                          | 'a'       | 'b'       | 'c'       | 'd'       | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c', 'd', 'e']                     | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c', 'd', 'e', 'f']                | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g']           | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | [2.2f, 3.3f] | ['a', 'b']
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']      | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | 'h'          | ['a', 'b']
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'] | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | 'h'          | 'i'
+
+        argsCount = arguments.size()
     }
 
     def "commanding to register all internal functions should result in registering proper functions"() {
@@ -215,6 +242,11 @@ class GlobalsSpec extends Specification {
 
         @PhpFunction('some_function2')
         def someFunction2() {}
+    }
+
+    private static class StaticFunctionHolder {
+        @PhpFunction('some_static_function')
+        static someStaticFunction() {}
     }
 
     private static class DefaultValuesFunctionHolder {
