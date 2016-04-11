@@ -166,13 +166,15 @@ class GlobalsSpec extends Specification {
 
         then:
         def internalFunctions = globals.definedFunctions['internal']
-        internalFunctions.size() == 5
+        internalFunctions.size() == 7
         // TODO extract expected function names somewhere?
         internalFunctions.containsValue('get_defined_functions')
         internalFunctions.containsValue('is_finite')
         internalFunctions.containsValue('is_infinite')
         internalFunctions.containsValue('is_nan')
         internalFunctions.containsValue('is_numeric')
+        internalFunctions.containsValue('token_name')
+        internalFunctions.containsValue('token_get_all')
     }
 
     @PhpInternal

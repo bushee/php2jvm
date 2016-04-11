@@ -8,12 +8,12 @@ import pl.bushee.php2jvm.function.PhpFunction;
 public class Tokenizer {
 
     @PhpFunction("token_name")
-    public String tokenName(int token) {
+    public static String tokenName(int token) {
         return "";
     }
 
     @PhpFunction(value = "token_get_all")
-    public Object[] tokenGetAll(String source, @OptionalIntegerArgument(0) int flags) {
+    public static Object[] tokenGetAll(String source, @OptionalIntegerArgument(0) int flags) {
         return new Object[]{};
     }
 }
