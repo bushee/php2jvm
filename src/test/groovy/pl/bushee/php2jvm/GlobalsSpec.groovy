@@ -23,8 +23,7 @@ class GlobalsSpec extends Specification {
         globals.registerFunctions(new InternalFunctionHolder())
 
         then:
-        def definedFunctions = globals.getDefinedFunctions()
-        definedFunctions['internal'].containsValue('some_function1')
+        globals.definedFunctions['internal'].containsValue('some_function1')
     }
 
     def "registered user function should be returned in defined functions list"() {
@@ -35,8 +34,7 @@ class GlobalsSpec extends Specification {
         globals.registerFunctions(new UserFunctionHolder())
 
         then:
-        def definedFunctions = globals.getDefinedFunctions()
-        definedFunctions['user'].containsValue('some_function2')
+        globals.definedFunctions['user'].containsValue('some_function2')
     }
 
     def "many registered functions should not interfere with each other"() {
@@ -48,7 +46,7 @@ class GlobalsSpec extends Specification {
         globals.registerFunctions(new InternalFunctionHolder())
 
         then:
-        def definedFunctions = globals.getDefinedFunctions()
+        def definedFunctions = globals.definedFunctions
         definedFunctions['internal'].containsValue('some_function1')
         definedFunctions['user'].containsValue('some_function2')
     }
@@ -157,6 +155,24 @@ class GlobalsSpec extends Specification {
         functionHolder.receivedG == [1, 2, 3]
         functionHolder.receivedH == [2.2f, 3.3f]
         functionHolder.receivedI == ['a', 'b']
+    }
+
+    def "commanding to register all internal functions should result in registering proper functions"() {
+        given:
+        def globals = new Globals();
+
+        when:
+        globals.registerInternalFunctions()
+
+        then:
+        def internalFunctions = globals.definedFunctions['internal']
+        internalFunctions.size() == 5
+        // TODO extract expected function names somewhere?
+        internalFunctions.containsValue('get_defined_functions')
+        internalFunctions.containsValue('is_finite')
+        internalFunctions.containsValue('is_infinite')
+        internalFunctions.containsValue('is_nan')
+        internalFunctions.containsValue('is_numeric')
     }
 
     @PhpInternal
