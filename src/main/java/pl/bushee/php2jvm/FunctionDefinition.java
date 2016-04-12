@@ -22,15 +22,15 @@ abstract class FunctionDefinition {
         this.name = name;
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
-    public boolean isInternal() {
+    public final boolean isInternal() {
         return method.getDeclaringClass().isAnnotationPresent(PhpInternal.class);
     }
 
-    public FunctionType getType() {
+    public final FunctionType getType() {
         return isInternal() ? FunctionType.INTERNAL : FunctionType.USER;
     }
 
