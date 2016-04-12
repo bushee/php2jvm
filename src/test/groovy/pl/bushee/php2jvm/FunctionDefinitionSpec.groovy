@@ -12,7 +12,7 @@ class FunctionDefinitionSpec extends Specification {
         def method = InternalFunctionHolder.getMethod('someFunction')
 
         when:
-        def function = new FunctionDefinitionImpl(method, 'some_name')
+        def function = new FunctionDefinitionImpl(method)
 
         then:
         function.isInternal()
@@ -23,7 +23,7 @@ class FunctionDefinitionSpec extends Specification {
         def method = UserFunctionHolder.getMethod('someFunction')
 
         when:
-        def function = new FunctionDefinitionImpl(method, 'some_name')
+        def function = new FunctionDefinitionImpl(method)
 
         then:
         !function.isInternal()
@@ -34,7 +34,7 @@ class FunctionDefinitionSpec extends Specification {
         def method = InternalFunctionHolder.getMethod('someFunction')
 
         when:
-        def function = new FunctionDefinitionImpl(method, 'some_name')
+        def function = new FunctionDefinitionImpl(method)
 
         then:
         function.getType() == FunctionDefinition.FunctionType.INTERNAL
@@ -45,15 +45,26 @@ class FunctionDefinitionSpec extends Specification {
         def method = UserFunctionHolder.getMethod('someFunction')
 
         when:
-        def function = new FunctionDefinitionImpl(method, 'some_name')
+        def function = new FunctionDefinitionImpl(method)
 
         then:
         function.getType() == FunctionDefinition.FunctionType.USER
     }
 
+    def "function definition initialization should fail if passed method was not annotated properly"() {
+        given:
+        def method = NotAFunctionHolder.getMethod('someMethodButNotAFunction')
+
+        when:
+        new FunctionDefinitionImpl(method)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
     private static class FunctionDefinitionImpl extends FunctionDefinition {
-        private FunctionDefinitionImpl(Method method, String name) {
-            super(method, name)
+        private FunctionDefinitionImpl(Method method) {
+            super(method)
         }
 
         @Override
@@ -71,5 +82,9 @@ class FunctionDefinitionSpec extends Specification {
     private static class UserFunctionHolder {
         @PhpFunction('some_name')
         def someFunction() {}
+    }
+
+    private static class NotAFunctionHolder {
+        def someMethodButNotAFunction() {}
     }
 }

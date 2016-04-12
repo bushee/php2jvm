@@ -33,9 +33,8 @@ public class Globals extends Context {
             if (!Modifier.isStatic(method.getModifiers())) {
                 continue;
             }
-            PhpFunction phpFunction = method.getAnnotation(PhpFunction.class);
-            if (phpFunction != null) {
-                registerFunction(new StaticFunctionDefinition(method, phpFunction.value()));
+            if (method.isAnnotationPresent(PhpFunction.class)) {
+                registerFunction(new StaticFunctionDefinition(method));
             }
         }
     }
@@ -45,9 +44,8 @@ public class Globals extends Context {
             if (Modifier.isStatic(method.getModifiers())) {
                 continue;
             }
-            PhpFunction phpFunction = method.getAnnotation(PhpFunction.class);
-            if (phpFunction != null) {
-                registerFunction(new InstanceFunctionDefinition(functionHolderObject, method, phpFunction.value()));
+            if (method.isAnnotationPresent(PhpFunction.class)) {
+                registerFunction(new InstanceFunctionDefinition(functionHolderObject, method));
             }
         }
     }

@@ -7,19 +7,19 @@ import java.lang.reflect.Modifier;
 // TODO UT
 class StaticFunctionDefinition extends FunctionDefinition {
 
-    StaticFunctionDefinition(Method method, String name) {
-        super(method, name);
-        assertStatic(method, name);
+    StaticFunctionDefinition(Method method) {
+        super(method);
+        assertStatic(method);
     }
 
-    private void assertStatic(Method method, String name) {
+    private void assertStatic(Method method) {
         if (!Modifier.isStatic(method.getModifiers())) {
             throw new IllegalArgumentException(
                 String.format(
                     "Static method was expected (trying to declare %s::%s() as %s()).",
                     method.getDeclaringClass().getName(),
                     method.getName(),
-                    name
+                    getName()
                 )
             );
         }

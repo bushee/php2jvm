@@ -8,20 +8,20 @@ import java.lang.reflect.Modifier;
 public class InstanceFunctionDefinition extends FunctionDefinition {
     private final Object functionHolder;
 
-    public InstanceFunctionDefinition(Object functionHolder, Method method, String name) {
-        super(method, name);
-        assertNotStatic(method, name);
+    public InstanceFunctionDefinition(Object functionHolder, Method method) {
+        super(method);
+        assertNotStatic(method);
         this.functionHolder = functionHolder;
     }
 
-    private void assertNotStatic(Method method, String name) {
+    private void assertNotStatic(Method method) {
         if (Modifier.isStatic(method.getModifiers())) {
             throw new IllegalArgumentException(
                 String.format(
                     "Non static method was expected (trying to declare %s::%s() as %s()).",
                     method.getDeclaringClass().getName(),
                     method.getName(),
-                    name
+                    getName()
                 )
             );
         }

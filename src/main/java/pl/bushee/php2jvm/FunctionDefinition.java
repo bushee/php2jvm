@@ -9,21 +9,33 @@ import pl.bushee.php2jvm.function.OptionalIntegerArrayArgument;
 import pl.bushee.php2jvm.function.OptionalNullArgument;
 import pl.bushee.php2jvm.function.OptionalStringArgument;
 import pl.bushee.php2jvm.function.OptionalStringArrayArgument;
+import pl.bushee.php2jvm.function.PhpFunction;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 abstract class FunctionDefinition {
     protected final Method method;
-    protected final String name;
 
-    FunctionDefinition(Method method, String name) {
+    FunctionDefinition(Method method) {
         this.method = method;
-        this.name = name;
+        assertAnnotatedProperly(method);
+    }
+
+    private void assertAnnotatedProperly(Method method) {
+        if (!method.isAnnotationPresent(PhpFunction.class)) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "Only a method annotated with @PhpFunction may be registered as a function (%s::%s() was given).",
+                    method.getDeclaringClass().getName(),
+                    method.getName()
+                )
+            );
+        }
     }
 
     public final String getName() {
-        return name;
+        return method.getAnnotation(PhpFunction.class).value();
     }
 
     public final boolean isInternal() {
