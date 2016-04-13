@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 
 abstract class FunctionDefinition {
     protected final Method method;
+    private Object[] defaultValues;
 
     FunctionDefinition(Method method) {
         this.method = method;
@@ -48,9 +49,38 @@ abstract class FunctionDefinition {
 
     public abstract Object call(Object... arguments) throws IllegalAccessException;
 
-    private Object getDefaultValueForArgument(int argumentNum) {
-        // TODO optimize, eg. create list of defaults once per function
-        for (Annotation annotation : method.getParameterAnnotations()[argumentNum]) {
+    protected Object[] prepareArguments(Object[] arguments) {
+        // TODO arguments conversion
+        Object[] args = new Object[method.getParameterCount()];
+        for (int i = 0; i < args.length; ++i) {
+            if (i < arguments.length) {
+                args[i] = arguments[i];
+            } else {
+                args[i] = getDefaultArgumentValue(i);
+            }
+        }
+        return args;
+    }
+
+    protected Object getDefaultArgumentValue(int argumentIndex) {
+        if (defaultValues == null) {
+            defaultValues = createDefaultValues();
+        }
+        return defaultValues[argumentIndex];
+    }
+
+    private Object[] createDefaultValues() {
+        final int parametersCount = method.getParameterCount();
+        final Object[] defaultValues = new Object[parametersCount];
+        final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        for (int i = 0; i < parametersCount; ++i) {
+            defaultValues[i] = getDefaultValue(parameterAnnotations[i]);
+        }
+        return defaultValues;
+    }
+
+    private Object getDefaultValue(Annotation[] annotations) {
+        for (Annotation annotation : annotations) {
             if (annotation instanceof OptionalBooleanArgument) {
                 return ((OptionalBooleanArgument) annotation).value();
             }
@@ -80,19 +110,6 @@ abstract class FunctionDefinition {
             }
         }
         return null;
-    }
-
-    protected Object[] prepareArguments(Object[] arguments) {
-        // TODO arguments conversion
-        Object[] args = new Object[method.getParameterCount()];
-        for (int i = 0; i < args.length; ++i) {
-            if (i < arguments.length) {
-                args[i] = arguments[i];
-            } else {
-                args[i] = getDefaultValueForArgument(i);
-            }
-        }
-        return args;
     }
 
     public enum FunctionType {

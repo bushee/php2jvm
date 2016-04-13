@@ -60,6 +60,7 @@ class GlobalsSpec extends Specification {
 
         then:
         globals.definedFunctions['user'].containsValue('some_static_function')
+        globals.definedFunctions['user'].containsValue('parameterless_static_function')
     }
 
     @Unroll
@@ -85,7 +86,7 @@ class GlobalsSpec extends Specification {
         conflicting = conflictingFunctionsHolder instanceof ConflictingInternalFunctionHolder ? 'internal' : 'user'
     }
 
-    def "calling function should delegate to actual annotated method"() {
+    def "calling function should delegate to actual annotated method (test for instance method)"() {
         given:
         def globals = new Globals()
         def functionHolder = new InternalFunctionHolder()
@@ -99,7 +100,20 @@ class GlobalsSpec extends Specification {
         functionHolder.sideEffect == 'some side effect'
     }
 
-    def "calling function with parameters should delegate to actual annotated method"() {
+    def "calling function should delegate to actual annotated method (test for static method)"() {
+        given:
+        def globals = new Globals()
+        globals.registerFunctions(StaticFunctionHolder)
+
+        when:
+        def result = globals.callFunction('parameterless_static_function')
+
+        then:
+        result == 'parameterless static function result'
+        StaticFunctionHolder.sideEffect == 'some side effect'
+    }
+
+    def "calling function with parameters should delegate to actual annotated method (test for instance method)"() {
         given:
         def globals = new Globals()
         def functionHolder = new UserFunctionHolder()
@@ -115,6 +129,22 @@ class GlobalsSpec extends Specification {
         functionHolder.receivedC == 'c'
     }
 
+    def "calling function with parameters should delegate to actual annotated method (test for static method)"() {
+        given:
+        def globals = new Globals()
+        globals.registerFunctions(StaticFunctionHolder)
+
+        when:
+        def result = globals.callFunction('some_static_function', 'a', 'b', 'c')
+
+        then:
+        result == 'concatenation result = "abc"'
+        StaticFunctionHolder.receivedA == 'a'
+        StaticFunctionHolder.receivedB == 'b'
+        StaticFunctionHolder.receivedC == 'c'
+    }
+
+    // TODO move below 3 tests to StaticFunctionDefinition and InstanceFunctionDefinition tests
     def "calling function with too little parameters should result in passing nulls for missing ones without default values"() {
         given:
         def globals = new Globals()
@@ -245,8 +275,24 @@ class GlobalsSpec extends Specification {
     }
 
     private static class StaticFunctionHolder {
+        def static receivedA = null
+        def static receivedB = null
+        def static receivedC = null
+        def static sideEffect = null
+
+        @PhpFunction('parameterless_static_function')
+        def static parameterlessStaticFunction() {
+            sideEffect = 'some side effect'
+            return 'parameterless static function result'
+        }
+
         @PhpFunction('some_static_function')
-        static someStaticFunction() {}
+        def static someStaticFunction(a, b, c) {
+            receivedA = a
+            receivedB = b
+            receivedC = c
+            return "concatenation result = \"$a$b$c\""
+        }
     }
 
     private static class DefaultValuesFunctionHolder {
