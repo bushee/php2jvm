@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-// TODO UT
 class StaticFunctionDefinition extends FunctionDefinition {
 
     StaticFunctionDefinition(Method method) {

@@ -144,79 +144,9 @@ class GlobalsSpec extends Specification {
         StaticFunctionHolder.receivedC == 'c'
     }
 
-    // TODO move below 3 tests to StaticFunctionDefinition and InstanceFunctionDefinition tests
-    def "calling function with too little parameters should result in passing nulls for missing ones without default values"() {
-        given:
-        def globals = new Globals()
-        def functionHolder = new UserFunctionHolder()
-        globals.registerFunctions(functionHolder)
-
-        when:
-        def result = globals.callFunction('some_function2', 'a')
-
-        then:
-        result == 'concatenation result = "anullnull"'
-        functionHolder.receivedA == 'a'
-        functionHolder.receivedB == null
-        functionHolder.receivedC == null
-    }
-
-    def "calling function with too much parameters should result in ignoring the extra ones"() {
-        given:
-        def globals = new Globals()
-        def functionHolder = new UserFunctionHolder()
-        globals.registerFunctions(functionHolder)
-
-        when:
-        def result = globals.callFunction('some_function2', 'a', 'b', 'c', 'd', 'e')
-
-        then:
-        result == 'concatenation result = "abc"'
-        functionHolder.receivedA == 'a'
-        functionHolder.receivedB == 'b'
-        functionHolder.receivedC == 'c'
-    }
-
-    @Unroll
-    def "calling function with missing parameters should result in using default values for them (passing #argsCount out of 9 arguments)"() {
-        given:
-        def globals = new Globals()
-        def functionHolder = new DefaultValuesFunctionHolder()
-        globals.registerFunctions(functionHolder)
-
-        when:
-        globals.callFunction('default_values_function', arguments.toArray())
-
-        then:
-        functionHolder.receivedA == expectedA
-        functionHolder.receivedB == expectedB
-        functionHolder.receivedC == expectedC
-        functionHolder.receivedD == expectedD
-        functionHolder.receivedE == expectedE
-        functionHolder.receivedF == expectedF
-        functionHolder.receivedG == expectedG
-        functionHolder.receivedH == expectedH
-        functionHolder.receivedI == expectedI
-
-        where:
-        arguments                                     | expectedA | expectedB | expectedC | expectedD | expectedE | expectedF     | expectedG | expectedH    | expectedI
-        []                                            | null      | true      | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a']                                         | 'a'       | true      | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b']                                    | 'a'       | 'b'       | 3         | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c']                               | 'a'       | 'b'       | 'c'       | 1.2f      | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c', 'd']                          | 'a'       | 'b'       | 'c'       | 'd'       | 'abc'     | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c', 'd', 'e']                     | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | [true, false] | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c', 'd', 'e', 'f']                | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | [1, 2, 3] | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c', 'd', 'e', 'f', 'g']           | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | [2.2f, 3.3f] | ['a', 'b']
-        ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']      | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | 'h'          | ['a', 'b']
-        ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'] | 'a'       | 'b'       | 'c'       | 'd'       | 'e'       | 'f'           | 'g'       | 'h'          | 'i'
-
-        argsCount = arguments.size()
-    }
-
     def "commanding to register all internal functions should result in registering proper functions"() {
         given:
-        def globals = new Globals();
+        def globals = new Globals()
 
         when:
         globals.registerInternalFunctions()
@@ -292,28 +222,6 @@ class GlobalsSpec extends Specification {
             receivedB = b
             receivedC = c
             return "concatenation result = \"$a$b$c\""
-        }
-    }
-
-    private static class DefaultValuesFunctionHolder {
-        def receivedA, receivedB, receivedC, receivedD, receivedE, receivedF, receivedG, receivedH, receivedI
-
-        @PhpFunction('default_values_function')
-        def someFunction(
-            @OptionalNullArgument a,
-            @OptionalBooleanArgument(true) b, @OptionalIntegerArgument(3) c,
-            @OptionalFloatArgument(1.2f) d, @OptionalStringArgument('abc') e,
-            @OptionalBooleanArrayArgument([true, false]) f, @OptionalIntegerArrayArgument([1, 2, 3]) g,
-            @OptionalFloatArrayArgument([2.2f, 3.3f]) h, @OptionalStringArrayArgument(['a', 'b']) i) {
-            receivedA = a;
-            receivedB = b;
-            receivedC = c;
-            receivedD = d;
-            receivedE = e;
-            receivedF = f;
-            receivedG = g;
-            receivedH = h;
-            receivedI = i;
         }
     }
 }
