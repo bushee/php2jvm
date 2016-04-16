@@ -1,12 +1,15 @@
 package pl.bushee.php2jvm;
 
+import org.reflections.Reflections;
+import pl.bushee.php2jvm.function.PhpFunction;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
 import static pl.bushee.php2jvm.FunctionDefinition.FunctionType.INTERNAL;
-import static pl.bushee.php2jvm.FunctionDefinition.FunctionType.USER;
 
 @PhpInternal
 public class Globals extends Context {
@@ -25,49 +28,57 @@ public class Globals extends Context {
         }
     }
 
-    public void registerFunctions(Object functionHolder) {
-        for (Method method : functionHolder.getClass().getDeclaredMethods()) {
-            PhpFunction phpFunction = method.getAnnotation(PhpFunction.class);
-            if (phpFunction != null) {
-                registerFunction(functionHolder, method, phpFunction);
+    public void registerFunctions(Class functionHolderClass) {
+        for (Method method : functionHolderClass.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())) {
+                continue;
+            }
+            if (method.isAnnotationPresent(PhpFunction.class)) {
+                registerFunction(new StaticFunctionDefinition(method));
             }
         }
     }
 
-    private void registerFunction(Object functionHolder, Method method, PhpFunction functionMetadata) {
-        FunctionDefinition alreadyRegisteredFunction = functions.get(functionMetadata.value());
-        if (alreadyRegisteredFunction != null) {
-            if (!tryToOverrideFunction(alreadyRegisteredFunction, functionHolder, method, functionMetadata)) {
-                throw new FatalError("Cannot redeclare " + functionMetadata.value() + "()");
+    public void registerFunctions(Object functionHolderObject) {
+        for (Method method : functionHolderObject.getClass().getDeclaredMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                continue;
+            }
+            if (method.isAnnotationPresent(PhpFunction.class)) {
+                registerFunction(new InstanceFunctionDefinition(functionHolderObject, method));
             }
         }
-
-        functions.put(functionMetadata.value(), createFunctionDefinition(functionHolder, method, functionMetadata));
     }
 
-    private boolean tryToOverrideFunction(FunctionDefinition alreadyRegisteredFunction, Object functionHolder, Method method, PhpFunction functionMetadata) {
-        if (alreadyRegisteredFunction instanceof OverloadedFunctionDefinition && functionMetadata.overloaded()) {
-            OverloadedFunctionDefinition overloadedFunctionDefinition = (OverloadedFunctionDefinition) alreadyRegisteredFunction;
-            return overloadedFunctionDefinition.addOverride(functionHolder, method);
+    private void registerFunction(FunctionDefinition functionDefinition) {
+        if (functions.containsKey(functionDefinition.getName())) {
+            throw new FatalError(String.format("Cannot redeclare %s()", functionDefinition.getName()));
         }
-        return false;
+
+        functions.put(functionDefinition.getName(), functionDefinition);
     }
 
-    private FunctionDefinition createFunctionDefinition(Object functionHolder, Method method, PhpFunction functionMetadata) {
-        FunctionDefinition.FunctionType functionType = isInternalFunctionHolder(functionHolder) ? INTERNAL : USER;
-        if (functionMetadata.overloaded()) {
-            return new OverloadedFunctionDefinition(functionHolder, method, functionType);
-        } else {
-            return new SingleSignatureFunctionDefinition(functionHolder, method, functionType);
+    public void registerInternalFunctions() {
+        new Reflections("pl.bushee.php2jvm")
+            .getTypesAnnotatedWith(PhpInternal.class)
+            .forEach(this::registerFunctions);
+        registerFunctions(this);
+    }
+
+    public Object callFunction(String functionName, Object... arguments) {
+        FunctionDefinition function = functions.get(functionName);
+        if (function == null) {
+            throw new FatalError("Call to undefined function " + functionName + "()");
         }
-    }
-
-    private boolean isInternalFunctionHolder(Object functionHolder) {
-        return functionHolder.getClass().isAnnotationPresent(PhpInternal.class);
+        try {
+            return function.call(arguments);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PhpFunction("get_defined_functions")
-    public PhpArray getDefinedFunctions() {
+    public PhpArray<PhpArray<String>> getDefinedFunctions() {
         PhpArray<String> internalFunctionsList = new PhpArray<>();
         PhpArray<String> userFunctionsList = new PhpArray<>();
 
